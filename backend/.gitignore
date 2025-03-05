@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+*.env
+*.venv
+
+# Django stuff
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+
+# Django migrations
+*/migrations/*.py
+*/migrations/*.pyc
+
+# Secrets and credentials
+*.pem
+*.key
+*.crt
+secrets.json
+config.json
+.env
+.env.*
+
+# VS Code and PyCharm
+.vscode/
+.idea/
+*.iml
+
+# Pip and dependencies
+Pipfile
+Pipfile.lock
+poetry.lock
+
+# Mac and Linux
+.DS_Store
+*.swp
+*.swo
