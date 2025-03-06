@@ -1,0 +1,30 @@
+Users
+username
+email
+password
+first_name
+last_name
+
+Transactions
+id
+amount
+date
+type (individual, group)
+by (refers to username)
+message
+groupdId (refers to group. can be null)
+
+groups
+id
+name
+members
+admin
+
+groupTransactions
+id
+groupId
+amount
+date
+message
+owedby (["userId":percentage])
+paidby
