@@ -21,5 +21,6 @@ version1 = 'api/v1/'
 urlpatterns = [
     path(version1+'admin/', admin.site.urls),
     path(version1+'users/',include('users.urls')),
-    path(version1+'transactions/',include('transactions.urls'))
+    path(version1+'transactions/',include('transactions.urls')),
+    path(version1+"groups/", include('groups.urls'))
 ]

@@ -16,7 +16,5 @@ class Transaction(models.Model):
     type = models.CharField(max_length=10,choices=TRANSACTION_TYPES)
     by = models.ForeignKey(User, on_delete=models.CASCADE,related_name='transactions')
     message = models.TextField(blank=True,null=True)
-    # group = models.ForeignKey('Group',on_delete=models.CASCADE,blank=True,null=True, related_name='transactions')
-    
     def __str__(self):
         return f"{self.by.username} - {self.amount} ({self.type})"
