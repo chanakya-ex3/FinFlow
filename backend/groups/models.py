@@ -13,10 +13,10 @@ class Group(models.Model):
     def __str__(self):
         return f"{self.groupAdmin.username} - {self.groupName} "
 
-class GroupMembers(models.Model):
+class GroupMember(models.Model):
     id = models.UUIDField(primary_key=True, default= uuid.uuid4, editable=False)
     groupId = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='group_members')
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='group_user',unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_user')
 
 class GroupTransaction(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid.uuid4, editable=False)
