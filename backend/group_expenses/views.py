@@ -4,22 +4,23 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from .models import GroupTransaction, SplitRatio
-from groups.models import GroupMember
+from groups.models import Group,GroupMember
 from transactions.models import Transaction
 from django.db import transaction
+from .serializers import GroupTransactionSerializer, SplitRatioSerializer
 from decimal import Decimal, ROUND_DOWN
 
 User = get_user_model()
 # Create your views here.
 class CreateTransaction(APIView):
     permission_classes = [IsAuthenticated]
-    def post(self, request, *args, **kwargs):
-        
+    def post(self, request, *args, **kwargs): 
         groupId = request.data.get('groupId')
         splitRatio = request.data.get('splitRatio')
         amount = request.data.get('amount')
         message = request.data.get('message')
         paidBy = request.user
+        groupInstance = Group.objects.get(id = groupId)
         groupMembers = GroupMember.objects.filter(groupId = groupId)
         isPresent = False
         for i in groupMembers:
@@ -40,6 +41,7 @@ class CreateTransaction(APIView):
 
                 group_transaction = GroupTransaction.objects.create(
                     transactionId=transactionID,
+                    groupId = groupInstance,
                     paidBy=paidBy,
                     paid_amount=amount
                 )
@@ -59,8 +61,58 @@ class CreateTransaction(APIView):
 
                 SplitRatio.objects.bulk_create(split_ratios)  # Efficient bulk insert
 
-            return Response({'message': 'Added Group Transaction Successfully'})
+            return Response({'message': 'Added Group Transaction Successfully','tid':transactionID.id,'gtid':group_transaction.id})
 
         except Exception as e:
             print(e)
             return Response({'message': 'An error occurred'}, status=500)
+
+
+class ViewTransaction(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request,  *args, **kwargs):
+        transactionId = self.kwargs['transactionId']
+        user = request.user
+        try:
+            with transaction.atomic():
+                transactionID = Transaction.objects.get(id = transactionId)
+                if(transactionID.type != 'group'):
+                    return Response({'message':"Invalid Transaction type"})
+                groupTransaction = GroupTransaction.objects.get(
+                    transactionId = transactionID
+                )
+                splitRatio = SplitRatio.objects.filter(
+                    transactionId = groupTransaction
+                )
+                print(groupTransaction)
+                print(splitRatio)
+                return Response({'message':"fetched sucessfully",'groupTransaction':GroupTransactionSerializer(groupTransaction).data, 'splitRatio':SplitRatioSerializer(splitRatio, many =True).data})
+        except Exception as e:
+          print(e)
+          return Response({"erorr":"an error occured"})
+
+class ListTransactions(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        groupId = self.kwargs['groupId']
+        try:
+            groupInstance = Group.objects.get(id = groupId)
+            group_transactions = GroupTransaction.objects.filter(groupId = groupInstance)
+            group_transactions_serializer = GroupTransactionSerializer(group_transactions, many =True)
+            return Response({"message":"Fetched successfully", "transactions":group_transactions_serializer.data})  
+        except Exception as e:
+            print(e)
+            return Response({"error":'An exception occurred'})
+
+class DeleteTransaction(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self,request, *args, **kwargs):
+        transactionId = request.data.get('transactionId')
+        try:
+            transactionID = Transaction.objects.get(id =transactionId)
+            transactionID.delete()
+            return Response({"messsage":"Deleted Successfully"})
+        except Exception as e:
+            print(e)
+            return Response({"error":"Error occured"})
