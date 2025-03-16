@@ -5,7 +5,9 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from .models import Group, GroupMember
 from .serializers import GroupSerializer, GroupMemberSerializer
+from transactions.models import Transaction
 from django.db import transaction
+from decimal import Decimal, ROUND_DOWN
 
 # Create your views here.
 User = get_user_model()
@@ -71,4 +73,4 @@ class JoinGroup(APIView):
             print(e)
             return Response({'error':'an error occured'})
             
-            
+

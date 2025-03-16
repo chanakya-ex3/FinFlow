@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     
     'groups',
     'transactions',
-    'users'
+    'users',
+    'group_expenses'
 ]
 
 MIDDLEWARE = [
