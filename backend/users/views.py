@@ -8,6 +8,11 @@ from rest_framework import status
 
 User = get_user_model()
 
+class AuthCheck(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, *args, **kwargs):
+        return Response({"message":"User is authenticated"})
+
 # Create your views here.
 class LoginView(APIView):
     permission_classes = [AllowAny]
