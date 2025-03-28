@@ -23,8 +23,9 @@ class LoginView(APIView):
         user = authenticate(username=username, password=password)
         if user:
             token, create = Token.objects.get_or_create(user = user)
-            return Response({'token':token.key},status = status.HTTP_200_OK)
-        return Response({"error":'Invalid Credentials'})
+            return Response({"message": "Logged In Successfully",'token':token.key},status = status.HTTP_200_OK)
+        print(user)
+        return Response({"error":'Invalid Credentials'}, status = status.HTTP_401_UNAUTHORIZED)
     
     def create_superuser(self, username, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
@@ -41,7 +42,7 @@ class SignUpView(APIView):
         email = request.data.get('email')
         
         if User.objects.filter(username = username).exists():
-            return Response({"error":"Error Creating account"})
+            return Response({"error":"Error Creating account"}, status = status.HTTP_400_BAD_REQUEST)
         User.objects.create_user(
             username= username,
             password= password,
