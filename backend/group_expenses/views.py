@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from .models import GroupTransaction, SplitRatio
 from groups.models import Group,GroupMember
+from django.shortcuts import get_object_or_404
 from transactions.models import Transaction
 from django.db import transaction
 from .serializers import GroupTransactionSerializer, SplitRatioSerializer
@@ -93,17 +94,73 @@ class ViewTransaction(APIView):
 
 class ListTransactions(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request, *args, **kwargs):
         user = request.user
-        groupId = self.kwargs['groupId']
+        group_id = kwargs.get("groupId")
+
         try:
-            groupInstance = Group.objects.get(id = groupId)
-            group_transactions = GroupTransaction.objects.filter(groupId = groupInstance)
-            group_transactions_serializer = GroupTransactionSerializer(group_transactions, many =True)
-            return Response({"message":"Fetched successfully", "transactions":group_transactions_serializer.data})  
+            group_instance = get_object_or_404(Group, id=group_id)
+            group_transactions = GroupTransaction.objects.filter(groupId=group_instance)
+            
+            if not group_transactions.exists():
+                return Response({"message": "No transactions found", "transactions": [], "debts": []})
+
+            # Serialize transactions
+            group_transactions_serializer = GroupTransactionSerializer(group_transactions, many=True)
+
+            # Calculate debts
+            user_balances = {}
+
+            # Step 1: Calculate total amount paid by each user
+            for transaction in group_transactions:
+                payer = transaction.paidBy
+                paid_amount = transaction.paid_amount
+                user_balances[payer] = user_balances.get(payer, 0) + paid_amount
+
+                # Step 2: Calculate total borrowed by each user
+                split_ratios = SplitRatio.objects.filter(transactionId=transaction)
+                for split in split_ratios:
+                    borrower = split.borrower
+                    borrowed_amount = split.borrowed_amount
+                    user_balances[borrower] = user_balances.get(borrower, 0) - borrowed_amount
+
+            # Step 3: Determine who owes whom
+            positive_balances = {user: balance for user, balance in user_balances.items() if balance > 0}
+            negative_balances = {user: -balance for user, balance in user_balances.items() if balance < 0}
+
+            debt_list = []
+
+            # Settling debts
+            while negative_balances and positive_balances:
+                debtor, debt = next(iter(negative_balances.items()))
+                creditor, credit = next(iter(positive_balances.items()))
+
+                amount_to_settle = min(debt, credit)
+                debt_list.append({
+                    "from": debtor.username,
+                    "to": creditor.username,
+                    "amount": float(amount_to_settle)
+                })
+
+                # Update balances
+                negative_balances[debtor] -= amount_to_settle
+                positive_balances[creditor] -= amount_to_settle
+
+                if negative_balances[debtor] == 0:
+                    del negative_balances[debtor]
+                if positive_balances[creditor] == 0:
+                    del positive_balances[creditor]
+
+            return Response({
+                "message": "Fetched successfully",
+                "transactions": group_transactions_serializer.data,
+                "debts": debt_list
+            })  
+
         except Exception as e:
             print(e)
-            return Response({"error":'An exception occurred'})
+            return Response({"error": "An exception occurred"})
 
 class DeleteTransaction(APIView):
     permission_classes = [IsAuthenticated]

@@ -165,6 +165,7 @@ final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   primarySwatch: Colors.indigo,
   primaryColorDark: Colors.white,
+  primaryColorLight: Colors.black,
   scaffoldBackgroundColor: Colors.indigo.shade200, // Light indigo shade
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.indigoAccent,
@@ -180,6 +181,8 @@ final ThemeData darkTheme = ThemeData(
   
   brightness: Brightness.dark,
   primarySwatch: Colors.indigo,
+  primaryColorDark:Colors.black ,
+  primaryColorLight: Colors.white,
   scaffoldBackgroundColor: Colors.indigo[900], // Darkest indigo shade
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.indigoAccent,

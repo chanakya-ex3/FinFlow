@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework.authtoken.models import Token
 from rest_framework import status
+from .serializers import UserSerializer
 
 User = get_user_model()
 
@@ -21,9 +22,10 @@ class LoginView(APIView):
         username = request.data.get('username')
         password = request.data.get('password')
         user = authenticate(username=username, password=password)
+        serializer = UserSerializer(user)
         if user:
             token, create = Token.objects.get_or_create(user = user)
-            return Response({"message": "Logged In Successfully",'token':token.key},status = status.HTTP_200_OK)
+            return Response({"message": "Logged In Successfully",'token':token.key,"user":serializer.data},status = status.HTTP_200_OK)
         print(user)
         return Response({"error":'Invalid Credentials'}, status = status.HTTP_401_UNAUTHORIZED)
     
@@ -43,13 +45,13 @@ class SignUpView(APIView):
         
         if User.objects.filter(username = username).exists():
             return Response({"error":"Error Creating account"}, status = status.HTTP_400_BAD_REQUEST)
-        User.objects.create_user(
+        user = User.objects.create_user(
             username= username,
             password= password,
             first_name = first_name,
             last_name = last_name, 
             email= email
         )
-        user = User.objects.get(username= username)
+        serializer = UserSerializer(user)
         token = Token.objects.create(user= user)
-        return Response({"message":"Account Created Successfully", "token":token.key}, status = status.HTTP_201_CREATED)
+        return Response({"message":"Account Created Successfully", "token":token.key,"user":serializer.data}, status = status.HTTP_201_CREATED)

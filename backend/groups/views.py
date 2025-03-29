@@ -8,6 +8,7 @@ from .serializers import GroupSerializer, GroupMemberSerializer
 from transactions.models import Transaction
 from django.db import transaction
 from decimal import Decimal, ROUND_DOWN
+from rest_framework import status
 
 # Create your views here.
 User = get_user_model()
@@ -27,18 +28,18 @@ class CreateGroup(APIView):
                     groupId=group,
                     user=request.user
                 )
-            return Response({'message': 'group created successfully', 'id': group.id})
+            return Response({'message': 'group created successfully', 'id': group.id},status = status.HTTP_200_OK)
         
         except Exception as e:
             print(e)
-            return Response({'error': 'error occurred'}, status=400)
+            return Response({'error': 'error occurred'}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ViewGroup(APIView):
     permission_classes = [IsAuthenticated]
     def get(self,request, *args, **kwargs):
         groupId = self.kwargs['groupId']
         if(groupId == 'null' or groupId == ''):
-            return Response({'error':"Group ID not provided"})
+            return Response({'error':"Group ID not provided"},status= status.HTTP_400_BAD_REQUEST)
         try:
             group = Group.objects.get(id = groupId)
             serializer = GroupSerializer(group)
@@ -46,10 +47,10 @@ class ViewGroup(APIView):
             members = GroupMember.objects.filter(groupId = group.id)
             member_serializer = GroupMemberSerializer(members, many =True)
             
-            return Response({'group':serializer.data,'admin':admin.first_name+' '+admin.last_name,'members':member_serializer.data}) 
+            return Response({'group':serializer.data,'admin':admin.first_name+' '+admin.last_name,'members':member_serializer.data}, status =status.HTTP_200_OK) 
         except Exception as e:
             print(e)
-            return Response({'error':'error occured'})
+            return Response({'error':'error occured'},status = status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class JoinGroup(APIView):
     permission_classes = [IsAuthenticated]
@@ -66,11 +67,25 @@ class JoinGroup(APIView):
                 user = member
             )
             if(created):
-                return Response({'message':'group joined successfully'})
+                return Response({'message':'group joined successfully'},status = status.HTTP_200_OK)
             else:
-                return Response({'message':'user aready exists in group'})
+                return Response({'message':'user aready exists in group'}, status = status.HTTP_409_CONFLICT)
         except Exception as e:
             print(e)
-            return Response({'error':'an error occured'})
+            return Response({'error':'an error occured'},status = status.HTTP_500_INTERNAL_SERVER_ERROR)
             
 
+class ListGroups(APIView):
+    def get(self, request, *args, **kwargs):
+        user_id = request.user
+        # Get groups where the user is a member
+        user_groups = Group.objects.filter(group_members__user_id=user_id)
+        # Serialize the data
+        serializer = GroupSerializer(user_groups, many=True)
+        groups_data = serializer.data
+        for i, group in enumerate(user_groups):
+                members = GroupMember.objects.filter(groupId=group)
+                groups_data[i]["members"] = GroupMemberSerializer(members, many=True).data
+                groups_data[i]['members_count'] = len(groups_data[i]['members'])
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
