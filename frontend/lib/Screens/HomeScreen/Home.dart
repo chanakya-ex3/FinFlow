@@ -15,7 +15,6 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         children: [
           Text("Welcome home"),
-          ElevatedButton(onPressed:()=> deleteKey('token'), child: Text("Logout"))
         ],
       ),
     );

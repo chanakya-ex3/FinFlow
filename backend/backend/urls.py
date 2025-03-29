@@ -23,5 +23,5 @@ urlpatterns = [
     path(version1+'users/',include('users.urls')),
     path(version1+'transactions/',include('transactions.urls')),
     path(version1+"groups/", include('groups.urls')),
-    path(version1+"transaction/", include('group_expenses.urls'))
+    path(version1+"group-expenses/", include('group_expenses.urls'))
 ]
