@@ -93,6 +93,10 @@ class _AuthPageState extends State<AuthPage>
         ),
       );
       setKey('token', responseData['token']);
+      setKey('username',responseData['user']['username']);
+      setKey('email',responseData['user']['email']);
+      setKey('first_name',responseData['user']['first_name']);
+      setKey('last_name',responseData['user']['last_name']);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

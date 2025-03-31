@@ -11,6 +11,6 @@ Future<String?> getKey(String key) async{
   return await storage.read(key: key);
 }
 
-Future<void> deleteKey(String key) async{
-  await storage.delete(key: key);
+Future<void> deleteKeys() async{
+  await storage.deleteAll();
 }
