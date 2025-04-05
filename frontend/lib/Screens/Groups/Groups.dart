@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:frontend/Screens/CreateGroup/CreateGroup.dart';
 import 'package:frontend/Widgets/GroupCard/GroupCard.dart';
 import 'package:frontend/localstorage/localstorage.dart';
 import 'dart:convert';
@@ -53,10 +54,14 @@ class _GroupsPageState extends State<GroupsPage> {
       if (query.isEmpty) {
         filteredGroups = groups;
       } else {
-        filteredGroups = groups
-            .where((group) =>
-                group['name'].toString().toLowerCase().contains(query.toLowerCase()))
-            .toList();
+        filteredGroups =
+            groups
+                .where(
+                  (group) => group['name'].toString().toLowerCase().contains(
+                    query.toLowerCase(),
+                  ),
+                )
+                .toList();
       }
     });
   }
@@ -82,42 +87,61 @@ class _GroupsPageState extends State<GroupsPage> {
     return Column(
       children: [
         AppBar(
-          title: isSearching
-              ? TextField(
-                  controller: searchController,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: "Search groups...",
-                    border: InputBorder.none,
-                    hintStyle: TextStyle(color: Colors.white70),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  onChanged: filterSearch,
-                )
-              : const Text("Groups"),
-          actions: [
-            IconButton(
-              icon: Icon(isSearching ? Icons.close : Icons.search),
-              onPressed: toggleSearch,
+          title:
+              isSearching
+                  ? TextField(
+                    controller: searchController,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      hintText: "Search groups...",
+                      border: InputBorder.none,
+                      hintStyle: TextStyle(color: Colors.white70),
+                    ),
+                    style: const TextStyle(color: Colors.white),
+                    onChanged: filterSearch,
+                  )
+                  : const Text("Groups"),
+          actions:
+              isSearching
+                  ? [
+                    IconButton(
+                      icon: Icon(Icons.close),
+                      onPressed: toggleSearch,
+                    ),
+                  ]
+                  : [
+                    IconButton(
+                      icon: Icon(Icons.group_add_outlined),
+                      onPressed:
+                          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => CreateGroupPage(),
             ),
-          ],
+          ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.search),
+                      onPressed: toggleSearch,
+                    ),
+                  ],
         ),
         Expanded(
-          child: isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : filteredGroups.isEmpty
+          child:
+              isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredGroups.isEmpty
                   ? const Center(child: Text("No groups found"))
                   : ListView.builder(
-                      padding: const EdgeInsets.all(10),
-                      itemCount: filteredGroups.length,
-                      itemBuilder: (context, index) {
-                        final group = filteredGroups[index];
-                        return GroupCard(groupData: group);
-                      },
-                    ),
+                    padding: const EdgeInsets.all(10),
+                    itemCount: filteredGroups.length,
+                    itemBuilder: (context, index) {
+                      final group = filteredGroups[index];
+                      return GroupCard(groupData: group);
+                    },
+                  ),
         ),
       ],
     );
   }
 }
-

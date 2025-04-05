@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:frontend/Screens/CreateExpense/CreateExpense.dart';
 import 'package:frontend/Widgets/GroupExpenseCard/GroupExpense.dart';
 import 'package:frontend/localstorage/localstorage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/services.dart';
 
 class GroupDetailsPage extends StatefulWidget {
   final Map<dynamic, dynamic> groupData;
@@ -24,6 +26,7 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
   Future<void> fetchData() async {
     username = await getKey('username') ?? '';
     String groupId = widget.groupData['id'];
+    print(widget.groupData);
     final url = Uri.parse('${BASE_URL}group-expenses/list/$groupId');
     String? token = await getKey('token');
 
@@ -35,12 +38,13 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        
+        print(data);
         setState(() {
           transactions = data['transactions'];
-          debts = data['debts'].where((debt) {
-  return debt['from'] == username || debt['to'] == username;
-}).toList();
+          debts =
+              data['debts'].where((debt) {
+                return debt['from'] == username || debt['to'] == username;
+              }).toList();
         });
       } else {
         print("Failed to load data: ${response.statusCode}");
@@ -54,6 +58,13 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
     });
   }
 
+  void copyToClipboard() {
+    Clipboard.setData(ClipboardData(text: widget.groupData['id']));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Copied the group code!")));
+  }
+
   @override
   void initState() {
     fetchData();
@@ -65,10 +76,18 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
     if (isLoading) {
       return Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    print(debts);
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.groupData['groupName'] ?? "Group Details"),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => CreateExpensePage()));
+            },
+            icon: Icon(Icons.add),
+          ),
+          IconButton(icon: Icon(Icons.copy), onPressed: copyToClipboard),
+        ],
       ),
       body: Column(
         children: [
@@ -83,13 +102,15 @@ class _GroupDetailsPageState extends State<GroupDetailsPage> {
                       itemCount: debts.length,
                       itemBuilder: (context, index) {
                         final debt = debts[index];
-                        return  ListTile(
+                        return ListTile(
                           leading: Icon(
                             Icons.account_balance_wallet,
                             color: Colors.red,
                           ),
                           title: Text(
-                            debt['from']== username?"You owe ${debt['to']} ₹${debt['amount']}":"${debt['from']} owes you ₹${debt['amount']}",
+                            debt['from'] == username
+                                ? "You owe ${debt['to']} ₹${debt['amount']}"
+                                : "${debt['from']} owes you ₹${debt['amount']}",
                           ),
                         );
                       },
